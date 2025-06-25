@@ -20,6 +20,7 @@ public class ImageGrid : MonoBehaviour, IPointerDownHandler, IDragHandler, IPoin
     private Queue<ImageGridCell> m_availableGridCells;
     private Dictionary<Vector2Int, ImageGridCell> m_gridCellDict;
     private ImageGridCell m_pressedImage;
+    //Unused for lack of time
     private bool m_imageDragged;
     private Vector2Int m_dragDirection;
     private Vector2 m_dragStartPosition;
@@ -103,6 +104,14 @@ public class ImageGrid : MonoBehaviour, IPointerDownHandler, IDragHandler, IPoin
     public void OnPointerUp(PointerEventData eventData)
     {
         m_dragDirection = Vector2Int.zero;
+
+        //Unused for lack of time
+        //if (!m_imageDragged)
+        //{
+        //    //Extend Image
+        //    ExtrudeCell(m_pressedImage);
+        //    return;
+        //}
         
         foreach (KeyValuePair<Vector2Int,ImageGridCell> cell in m_gridCellDict)
         {
@@ -129,6 +138,46 @@ public class ImageGrid : MonoBehaviour, IPointerDownHandler, IDragHandler, IPoin
             {
                 m_gridCellDict[cell.CellGridPosition] = cell;       
             }
+        }
+    }
+
+    //Unused for lack of time
+    //This could and should be smoothed out
+    private void ExtrudeCell(ImageGridCell cell)
+    {
+        Vector2Int extrude = Vector2Int.zero;
+        int movementDirection = 1;
+        if (cell.CellExtents.sqrMagnitude > 0)
+        {
+            extrude = cell.CellExtents;
+            cell.CellExtents = Vector2Int.zero;
+            movementDirection = -1;
+        }
+        else
+        {
+            movementDirection = 1;
+            //If not on the middle column extrude to the center on the x Axis
+            if (cell.CellGridPosition.x > 0 || cell.CellGridPosition.x < 0)
+            {
+                extrude = new Vector2Int(-Math.Sign(cell.CellGridPosition.x), 0);
+            }
+            //If above or below center extend towards center
+            else if (cell.CellGridPosition.y > 0 || cell.CellGridPosition.y < 0)
+            {
+                extrude = new Vector2Int(0, -Math.Sign(cell.CellGridPosition.y));
+            }
+            //At center extrude upwards
+            else
+            {
+                extrude = new Vector2Int(0, 1);
+            }
+
+            cell.CellExtents += extrude;
+        }
+
+        for (int i = 1; m_gridCellDict.TryGetValue(cell.CellGridPosition + extrude * i, out var pushedCell) && i < m_gridCellDict.Count; i++) {
+            pushedCell.CellFloatingGridPosition =
+                pushedCell.CellGridPosition + extrude * movementDirection;
         }
     }
 
